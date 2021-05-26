@@ -1,0 +1,81 @@
+#Все агенты 
+
+select 
+email as CustomerIdentity
+ ,cianuserid
+ ,main_region
+ ,usertype
+ ,client_category
+ ,is_homeowner
+ ,tarif
+ ,client_category
+ ,has_manager
+ ,avg_ann_count
+ ,has_commercial
+  ,is_zastr
+from
+  crm.crm_user_segments_lst
+where
+  usertype != 'Поискун'
+  and istestuser = false  
+  and email not like '%cian.ru'
+  and is_homeowner = 0
+  and is_zastr = 0
+  
+ 
+ #проверка_робота
+
+select *
+from smb.robot_list_region
+where promocode = 'BNSP9U5H3'
+
+
+#размещался_за_последние_30_дней
+
+WITH content AS (
+SELECT
+  userid
+  , COUNT (DISTINCT announcementid) AS content
+FROM
+  bi.orderfacts AS orf
+WHERE
+    orf.dadd >= CURRENT_DATE - INTERVAL '30' DAY --период контента
+  AND
+    COALESCE (announcementid, 0) > 0
+  AND
+    wasactive
+GROUP BY
+  userid
+)
+SELECT
+  email as CustomerIdentity
+  ,cianuserid
+  ,main_region
+  ,usertype
+  ,client_category
+  ,is_homeowner
+  ,tarif
+  ,client_category
+  ,has_manager
+  ,avg_ann_count
+  ,content AS unic_ann
+  ,has_commercial
+  ,is_zastr
+FROM
+  crm.crm_user_segments_lst AS lst
+LEFT JOIN
+  content AS cnt
+ON
+  lst.userid = cnt.userid
+WHERE
+    usertype != 'Поискун'
+  AND
+    NOT istestuser
+  AND
+    email NOT LIKE '%cian.ru'
+  AND
+    is_homeowner = 0
+  AND
+    is_zastr = 0
+
+;
